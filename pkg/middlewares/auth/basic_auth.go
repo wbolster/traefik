@@ -20,6 +20,7 @@ import (
 
 const (
 	basicTypeName = "BasicAuth"
+	maxCacheSize  = 128
 )
 
 type basicAuth struct {
@@ -40,7 +41,12 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 		return nil, err
 	}
 
-	cache, err := lru.New(128)
+	// Use a nonzero cache size with some room for caching failing attempts.
+	cacheSize := len(users) + 8
+	if cacheSize > maxCacheSize {
+		cacheSize = maxCacheSize
+	}
+	cache, err := lru.New(cacheSize)
 	if err != nil {
 		return nil, err
 	}
